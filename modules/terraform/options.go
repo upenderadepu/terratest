@@ -70,6 +70,8 @@ type Options struct {
 	Parallelism              int                    // Set the parallelism setting for Terraform
 	PlanFilePath             string                 // The path to output a plan file to (for the plan command) or read one from (for the apply command)
 	PluginDir                string                 // The path of downloaded plugins to pass to the terraform init command (-plugin-dir)
+	SetVarsAfterVarFiles     bool                   // Pass -var options after -var-file options to Terraform commands
+	WarningsAsErrors         map[string]string      // Terraform warning messages that should be treated as errors. The keys are a regexp to match against the warning and the value is what to display to a user if that warning is matched.
 }
 
 // Clone makes a deep copy of most fields on the Options object and returns it.
@@ -81,6 +83,28 @@ func (options *Options) Clone() (*Options, error) {
 	if err := copier.Copy(newOptions, options); err != nil {
 		return nil, err
 	}
+	// copier does not deep copy maps, so we have to do it manually.
+	newOptions.EnvVars = make(map[string]string)
+	for key, val := range options.EnvVars {
+		newOptions.EnvVars[key] = val
+	}
+	newOptions.Vars = make(map[string]interface{})
+	for key, val := range options.Vars {
+		newOptions.Vars[key] = val
+	}
+	newOptions.BackendConfig = make(map[string]interface{})
+	for key, val := range options.BackendConfig {
+		newOptions.BackendConfig[key] = val
+	}
+	newOptions.RetryableTerraformErrors = make(map[string]string)
+	for key, val := range options.RetryableTerraformErrors {
+		newOptions.RetryableTerraformErrors[key] = val
+	}
+	newOptions.WarningsAsErrors = make(map[string]string)
+	for key, val := range options.WarningsAsErrors {
+		newOptions.WarningsAsErrors[key] = val
+	}
+
 	return newOptions, nil
 }
 
